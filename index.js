@@ -10,7 +10,7 @@ class Pacman {
     }) {
         this.position = position
         this.velocity = velocity
-        this.radius = 10
+        this.radius = 15
 
     }
     draw() {
@@ -101,31 +101,122 @@ map.forEach((row, i) => {
     })
 })
 
+function circlecollideswithrectangle({
+    circle,
+    rectangle
+}) {
+    return (
+        circle.position.y - circle.radius + circle.velocity.y <= rectangle.position.y + rectangle.height &&
+        circle.position.x + circle.radius + circle.velocity.x >= rectangle.position.x &&
+        circle.position.y + circle.radius + circle.velocity.y >= rectangle.position.y &&
+        circle.position.x - circle.radius + circle.velocity.x <= rectangle.position.x + rectangle.width
+
+    )
+}
+
 function animate() {
     requestAnimationFrame(animate)
     c.clearRect(0, 0, canvas.width, canvas.height)
-    boundaries.forEach((boundary) => {
-        boundary.draw()
+    if (keys.z.pressed && lastkey === 'z') {
+      for(let i = 0; i < boundaries.length; i++){
+        const boundary = boundaries[i]
+      
         if (
-            pacman.position.y - pacman.radius <= boundary.position.y + boundary.height && pacman.position.x + pacman.radius >= boundary.position.x && pacman.position.y + pacman.radius >= boundary.position.y && pacman.position.x - pacman.radius <= boundary.position.x + boundary.width
-
+            circlecollideswithrectangle({
+                circle: {
+                    ...pacman,velocity: {x: 0, y:-5}
+                },
+                rectangle: boundary
+            })
         ) {
-            console.log('colision')
+            pacman.velocity.y = 0
+            break
+        } else {
+            pacman.velocity.y = -5
         }
-    })
-    pacman.update()
-    pacman.velocity.y = 0
-    pacman.velocity.x = 0
-
-    if (keys.z.pressed && lastkey === 'z'){
-        pacman.velocity.y = -5
-    }else if (keys.q.pressed && lastkey === 'q'){
-        pacman.velocity.x =-5
-    }else if (keys.s.pressed && lastkey === 's'){
-        pacman.velocity.y =5
-    }else if (keys.d.pressed && lastkey === 'd'){
-        pacman.velocity.x =5
+   
+   
+    }}
+ else if (keys.q.pressed && lastkey === 'q') {
+    for(let i = 0; i < boundaries.length; i++){
+        const boundary = boundaries[i]
+      
+        if (
+            circlecollideswithrectangle({
+                circle: {
+                    ...pacman,velocity: {x: -5, y:0}
+                },
+                rectangle: boundary
+            })
+        ) {
+            pacman.velocity.x = 0
+            break
+        } else {
+            pacman.velocity.x = -5
+        }
+   
+   
     }
+} else if (keys.s.pressed && lastkey === 's') {
+    for(let i = 0; i < boundaries.length; i++){
+        const boundary = boundaries[i]
+      
+        if (
+            circlecollideswithrectangle({
+                circle: {
+                    ...pacman,velocity: {x: 0, y:5}
+                },
+                rectangle: boundary
+            })
+        ) {
+            pacman.velocity.y = 0
+            break
+        } else {
+            pacman.velocity.y = 5
+        }
+   
+   
+    }
+} else if (keys.d.pressed && lastkey === 'd') {
+    for(let i = 0; i < boundaries.length; i++){
+        const boundary = boundaries[i]
+      
+        if (
+            circlecollideswithrectangle({
+                circle: {
+                    ...pacman,velocity: {x: 5, y:0}
+                },
+                rectangle: boundary
+            })
+        ) {
+            pacman.velocity.x = 0
+            break
+        } else {
+            pacman.velocity.x = 5
+        }
+   
+   
+    }
+}
+boundaries.forEach((boundary) => {
+    boundary.draw()
+    if (
+        circlecollideswithrectangle({
+            circle: pacman,
+            rectangle: boundary
+        })
+    ) {
+        console.log('colision')
+        pacman.velocity.x = 0
+        pacman.velocity.y = 0
+    }
+})
+
+pacman.update()
+/* pacman.velocity.y = 0
+pacman.velocity.x = 0 */
+
+
 }
 animate()
 
@@ -156,7 +247,9 @@ window.addEventListener('keydown', ({
     console.log(keys.s.pressed)
     console.log(keys.q.pressed)
 })
-window.addEventListener('keyup', ({key}) => {
+window.addEventListener('keyup', ({
+    key
+}) => {
     console.log(key)
     switch (key) {
         case 'z':
