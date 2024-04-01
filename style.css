@@ -1,0 +1,22 @@
+*{
+    
+    padding: 0;
+    margin: 0;
+}
+h1
+{
+margin :10% 50%;
+
+    font-family: monospace;
+        font-size: 1.5rem;
+        color: yellow
+         ;
+        
+    }
+canvas{
+    background-color: black;
+    margin: 0;
+}
+
+      
+  
