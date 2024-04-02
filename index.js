@@ -28,11 +28,12 @@ class Pacman {
   }
 }
 class Pellet {
-  constructor({position,})
-   {
+  constructor({
+    position,
+  }) {
     this.position = position
     this.radius = 3
-   }
+  }
   draw() {
     c.beginPath()
     c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
@@ -96,11 +97,11 @@ const map = [
   ["|", ".", "[", "]", ".", "=", ".", "[", "-", "6", "-", "]", ".", "=", ".", "[", "]", ".", "|", ],
   ["|", ".", ".", ".", ".", "|", ".", ".", ".", "|", ".", ".", ".", "|", ".", ".", ".", ".", "|", ],
   ["5", "-", "-", "2", ".", "5", "-", "]", ".", "_", ".", "[", "-", "7", ".", "1", "-", "-", "7", ],
-  ["|", ".", ".", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", ".", ".", "|", ],
+  ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["4", "-", "-", "3", ".", "_", ".", "1", "]", ".", "[", "2", ".", "_", ".", "4", "-", "-", "3", ],
   [".", ".", ".", ".", ".", ".", ".", "|", ".", ".", ".", "|", ".", ".", ".", ".", ".", ".", ".", ],
   ["1", "-", "-", "2", ".", "=", ".", "4", "-", "-", "-", "3", ".", "=", ".", "1", "-", "-", "2", ],
-  ["|", ".", ".", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", ".", ".", "|", ],
+  ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["5", "-", "-", "3", ".", "_", ".", "[", "-", "6", "-", "]", ".", "_", ".", "4", "-", "-", "7", ],
   ["|", ".", ".", ".", ".", ".", ".", ".", ".", "|", ".", ".", ".", ".", ".", ".", ".", ".", "|", ],
   ["|", ".", "[", "2", ".", "[", "-", "]", ".", "_", ".", "[", "-", "]", ".", "1", "]", ".", "|", ],
@@ -289,12 +290,23 @@ map.forEach((row, i) => {
         pellets.push(
           new Pellet({
             position: {
-              x: Boundary.width * j + Boundary.width / 2, 
+              x: Boundary.width * j + Boundary.width / 2,
               y: Boundary.height * i + Boundary.height / 2,
             },
           })
         );
         break;
+        case "§":
+        boundaries.push(
+          new Boundary({
+            position: {
+              x: Boundary.width * j,
+              y: Boundary.height * i,
+            },
+            image: createImage("./img/blockvide.png"),
+          })
+        );
+        break
     }
   })
 })
@@ -413,10 +425,18 @@ function animate() {
 
     }
   }
-  pellets.forEach(pellet => {
+  for(let i = pellets.length - 1; 0<i ; i--){
+    const pellet = pellets[i]
     pellet.draw()
+    if(Math.hypot(
+      pellet.position.x - pacman.position.x,
+      pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius)
+    {console.log('touching')
+  pellets.splice(i , 1)}
+  }
+    
+    
 
-  });
   boundaries.forEach((boundary) => {
     boundary.draw()
     if (
