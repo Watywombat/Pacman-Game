@@ -571,7 +571,21 @@ function animate() {
 
       const collisions = []
       boundaries.forEach(boundary => {
+       if (circlecollideswithrectangle({circle: ghost,
+        rectangle: boundary} )){
+        
+        if (boundary.name=="T1") {
+          ghost.position.y=9*Boundary.height+20
+          ghost.position.x=17*Boundary.width+20
+          return
+        }
+        if (boundary.name=="T2") {
+          ghost.position.y=9*Boundary.height+20
+          ghost.position.x=1*Boundary.width+20
+          return
+        }}
         if (
+          
           !collisions.includes('right') &&
           circlecollideswithrectangle({
             circle: {
@@ -583,7 +597,10 @@ function animate() {
             },
             rectangle: boundary
           })
-        ) {
+        ) 
+        
+        
+        {
           collisions.push('right')
         }
         if (
@@ -641,6 +658,7 @@ function animate() {
         else if (ghost.velocity.x < 0) ghost.prevcollissions.push('left')
         else if (ghost.velocity.y < 0) ghost.prevcollissions.push('up')
         else if (ghost.velocity.y > 0) ghost.prevcollissions.push('down')
+
         const pathways = ghost.prevcollissions.filter((collision) => {
           return !collisions.includes(collision)
         })
