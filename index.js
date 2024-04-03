@@ -32,8 +32,10 @@ class Pacman {
 class Ghost {
   static speed = 2
   constructor({
+    name,
     position,
     velocity,
+    image,
     color = "red"
   }) {
     this.position = position
@@ -42,14 +44,14 @@ class Ghost {
     this.color = color
     this.prevcollissions = []
     this.speed = 2
+    this.image = image
+    this.name = name
 
   }
   draw() {
-    c.beginPath()
-    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
-    c.fillStyle = this.color
-    c.fill()
-    c.closePath()
+
+    c.drawImage(this.image, this.position.x - 20 ,this.position.y -20 )
+   
   }
   update() {
     this.draw()
@@ -79,13 +81,14 @@ class Boundary {
   static height = 40
   constructor({
     position,
-    image
+    image,
+    name=null
   }) {
     this.position = position
     this.width = 40
     this.height = 40
     this.image = image
-
+    this.name=name
   }
   draw() {
     /*  c.fillStyle = "blue"
@@ -103,9 +106,11 @@ const ghosts = [
     },
     velocity: {
       x: Ghost.speed,
-      y: 0
+      y: 0, },
+    name: 'pink',
+      image : createImage("img/pinkRight.png")
     }
-  }),new Ghost({
+  ),new Ghost({
     position: {
       x: Boundary.height * 4 + Boundary.height / 2,
       y: Boundary.width * 9 + Boundary.width / 2
@@ -113,7 +118,7 @@ const ghosts = [
     velocity: {
       x: Ghost.speed,
       y: 0
-    },color: 'green'
+    },name: 'orange', image : createImage("img/orangeRight.png")
   }),new Ghost({
     position: {
       x: Boundary.height * 8 + Boundary.height / 2,
@@ -122,7 +127,7 @@ const ghosts = [
     velocity: {
       x: Ghost.speed,
       y: 0
-    },color: 'pink'
+    },name: 'red', image : createImage("img/redRight.png")
   })
 ]
 const pacman = new Pacman({
@@ -161,7 +166,7 @@ const map = [
   ["5", "-", "-", "2", ".", "5", "-", "]", ".", "_", ".", "[", "-", "7", ".", "1", "-", "-", "7", ],
   ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["4", "-", "-", "3", ".", "_", ".", "[", "]", ".", "[", "]", ".", "_", ".", "4", "-", "-", "3", ],
-  [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ],
+  ["T1", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "T2", ],
   ["1", "-", "-", "2", ".", "=", ".", "[", "-", "-", "-", "]", ".", "=", ".", "1", "-", "-", "2", ],
   ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["5", "-", "-", "3", ".", "_", ".", "[", "-", "6", "-", "]", ".", "_", ".", "4", "-", "-", "7", ],
@@ -369,6 +374,30 @@ map.forEach((row, i) => {
           })
         );
         break
+        case "T1":
+        boundaries.push(
+          new Boundary({
+            position: {
+              x: Boundary.width * j,
+              y: Boundary.height * i,
+            },
+            image: createImage("./img/blockvide.png"),
+            name:"T1"
+          })
+        );
+        break
+        case "T2":
+        boundaries.push(
+          new Boundary({
+            position: {
+              x: Boundary.width * j,
+              y: Boundary.height * i,
+            },
+            image: createImage("./img/blockvide.png"),
+            name:"T2"
+          })
+        );
+        break
     }
   })
 })
@@ -513,10 +542,20 @@ function animate() {
         rectangle: boundary
       })
     ) {
-      console.log('colision')
+        if (boundary.name=="T1") {
+          pacman.position.y=9*Boundary.height+20
+          pacman.position.x=17*Boundary.width+20
+          return
+        }
+        if (boundary.name=="T2") {
+          pacman.position.y=9*Boundary.height+20
+          pacman.position.x=1*Boundary.width+20
+          return
+        }
       pacman.velocity.x = 0
       pacman.velocity.y = 0
     }
+
   })
 
   pacman.update(),
@@ -528,7 +567,6 @@ function animate() {
         ghost.position.y - pacman.position.y) < ghost.radius + pacman.radius) 
         {
           cancelAnimationFrame(animationId)
-          console.log('you lose')
         }
 
       const collisions = []
@@ -603,35 +641,30 @@ function animate() {
         else if (ghost.velocity.x < 0) ghost.prevcollissions.push('left')
         else if (ghost.velocity.y < 0) ghost.prevcollissions.push('up')
         else if (ghost.velocity.y > 0) ghost.prevcollissions.push('down')
-
-        console.log(collisions)
-        console.log(ghost.prevcollissions)
         const pathways = ghost.prevcollissions.filter((collision) => {
           return !collisions.includes(collision)
         })
-        console.log({
-          pathways
-        })
         const direction = pathways[Math.floor(Math.random() * pathways.length)]
-        console.log({
-          direction
-        })
         switch (direction) {
           case 'down':
             ghost.velocity.y = ghost.speed
             ghost.velocity.x = 0
+            ghost.image = createImage(`./img/${ghost.name}Down.png`)
             break
             case 'up':
             ghost.velocity.y = -ghost.speed
             ghost.velocity.x = 0
+            ghost.image = createImage(`./img/${ghost.name}Up.png`)
             break
             case 'right':
             ghost.velocity.y = 0
             ghost.velocity.x = ghost.speed
+            ghost.image = createImage(`./img/${ghost.name}Right.png`)
             break
             case 'left':
             ghost.velocity.y = 0
             ghost.velocity.x = -ghost.speed
+            ghost.image = createImage(`./img/${ghost.name}Left.png`)
             break
         }
 
@@ -647,7 +680,6 @@ animate()
 window.addEventListener('keydown', ({
   key
 }) => {
-  console.log(key)
   switch (key) {
     case 'z':
       keys.z.pressed = true
@@ -666,15 +698,10 @@ window.addEventListener('keydown', ({
       lastkey = 'd'
       break
   }
-  console.log(keys.d.pressed)
-  console.log(keys.z.pressed)
-  console.log(keys.s.pressed)
-  console.log(keys.q.pressed)
 })
 window.addEventListener('keyup', ({
   key
 }) => {
-  console.log(key)
   switch (key) {
     case 'z':
       keys.z.pressed = false
@@ -689,5 +716,4 @@ window.addEventListener('keyup', ({
       keys.d.pressed = false
       break
   }
-  console.log(pacman.velocity)
 })
