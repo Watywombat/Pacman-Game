@@ -12,24 +12,43 @@ class Pacman {
     this.position = position
     this.velocity = velocity
     this.radius = 15
-
+    this.radians = 0.75
+    this.openrate = 0.12
+this.rotation = 0
   }
   draw() {
+  c.save()
+  c.translate(this.position.x,this.position.y)
+  c.rotate(this.rotation)
+  c.translate(-this.position.x,-this.position.y)
     c.beginPath()
-    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+    c.arc(this.position.x, this.position.y, this.radius, this.radians, Math.PI * 2 - this.radians)
+    c.lineTo(this.position.x, this.position.y)
     c.fillStyle = 'yellow'
     c.fill()
     c.closePath()
+    c.restore()
   }
   update() {
     this.draw()
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
 
+    if (this.radians < 0 || this.radians > .75) this.openrate = -this.openrate
+
+    this.radians += this.openrate
+
+
   }
 }
-let manger = new Audio ('img/8d82b5_Pacman_Waka_Waka_Sound_Effect.mp3'); 
-manger.volume=0.5
+let manger = new Audio('img/pac-man-ghost-touched-made-with-Voicemod.mp3');
+manger.volume = 0.5
+let die = new Audio('img/pacman_death.wav');
+die.volume = 0.5
+let mangerghost = new Audio('img/pacman_eatghost.wav');
+mangerghost.volume = 0.5
+let ghostchase = new Audio('img/ghost-siren-sound-2-101soundboards.mp3');
+ghostchase.volume = 0.5
 class Ghost {
   static speed = 2
   constructor({
@@ -47,12 +66,15 @@ class Ghost {
     this.speed = 2
     this.image = image
     this.name = name
+    this.scared = false
 
   }
   draw() {
-
-    c.drawImage(this.image, this.position.x - 20 ,this.position.y -20 )
-   
+    if (this.scared == true) {
+      this.image = createImage('img/Vulnerable-ghost.png')
+      this.speed = 1
+      c.drawImage(this.image, this.position.x - 20, this.position.y - 20)
+    } else (c.drawImage(this.image, this.position.x - 20, this.position.y - 20))
   }
   update() {
     this.draw()
@@ -61,6 +83,7 @@ class Ghost {
 
   }
 }
+
 class Pellet {
   constructor({
     position,
@@ -77,19 +100,35 @@ class Pellet {
   }
 }
 
+class PowerUp {
+  constructor({
+    position,
+  }) {
+    this.position = position
+    this.radius = 10
+  }
+  draw() {
+    c.beginPath()
+    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+    c.fillStyle = 'white'
+    c.fill()
+    c.closePath()
+  }
+}
+
 class Boundary {
   static width = 40
   static height = 40
   constructor({
     position,
     image,
-    name=null
+    name = null
   }) {
     this.position = position
     this.width = 40
     this.height = 40
     this.image = image
-    this.name=name
+    this.name = name
   }
   draw() {
     /*  c.fillStyle = "blue"
@@ -99,6 +138,7 @@ class Boundary {
 }
 const pellets = []
 const boundaries = []
+const powerUps = []
 const ghosts = [
   new Ghost({
     position: {
@@ -107,11 +147,11 @@ const ghosts = [
     },
     velocity: {
       x: Ghost.speed,
-      y: 0, },
+      y: 0,
+    },
     name: 'pink',
-      image : createImage("img/pinkRight.png")
-    }
-  ),new Ghost({
+    image: createImage("img/pinkRight.png")
+  }), new Ghost({
     position: {
       x: Boundary.height * 4 + Boundary.height / 2,
       y: Boundary.width * 9 + Boundary.width / 2
@@ -119,8 +159,10 @@ const ghosts = [
     velocity: {
       x: Ghost.speed,
       y: 0
-    },name: 'orange', image : createImage("img/orangeRight.png")
-  }),new Ghost({
+    },
+    name: 'orange',
+    image: createImage("img/orangeRight.png")
+  }), new Ghost({
     position: {
       x: Boundary.height * 8 + Boundary.height / 2,
       y: Boundary.width * 11 + Boundary.width / 2
@@ -128,7 +170,9 @@ const ghosts = [
     velocity: {
       x: Ghost.speed,
       y: 0
-    },name: 'red', image : createImage("img/redRight.png")
+    },
+    name: 'red',
+    image: createImage("img/redRight.png")
   })
 ]
 const pacman = new Pacman({
@@ -167,7 +211,7 @@ const map = [
   ["5", "-", "-", "2", ".", "5", "-", "]", ".", "_", ".", "[", "-", "7", ".", "1", "-", "-", "7", ],
   ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["4", "-", "-", "3", ".", "_", ".", "[", "]", ".", "[", "]", ".", "_", ".", "4", "-", "-", "3", ],
-  ["T1", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "T2", ],
+  ["T1", ".", ".", ".", ".", ".", ".", ".", ".", "p", ".", ".", ".", ".", ".", ".", ".", ".", "T2", ],
   ["1", "-", "-", "2", ".", "=", ".", "[", "-", "-", "-", "]", ".", "=", ".", "1", "-", "-", "2", ],
   ["|", "§", "§", "|", ".", "|", ".", ".", ".", ".", ".", ".", ".", "|", ".", "|", "§", "§", "|", ],
   ["5", "-", "-", "3", ".", "_", ".", "[", "-", "6", "-", "]", ".", "_", ".", "4", "-", "-", "7", ],
@@ -177,10 +221,19 @@ const map = [
   ["5", "]", ".", "_", ".", "=", ".", "[", "-", "6", "-", "]", ".", "=", ".", "_", ".", "[", "7", ],
   ["|", ".", ".", ".", ".", "|", ".", ".", ".", "|", ".", ".", ".", "|", ".", ".", ".", ".", "|", ],
   ["|", ".", "[", "-", "-", "8", "-", "]", ".", "_", ".", "[", "-", "8", "-", "-", "]", ".", "|", ],
-  ["|", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "|", ],
+  ["|", "p", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "p", "|", ],
   ["4", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "3", ],
 ];
-
+function choisirCouleurAleatoire() {
+  // Un tableau contenant les couleurs disponibles
+  const couleurs = ['red', 'orange', 'pink'];
+  
+  // Générer un index aléatoire basé sur la longueur du tableau couleurs
+  const indexAleatoire = Math.floor(Math.random() * couleurs.length);
+  
+  // Sélectionner et retourner une couleur aléatoirement
+  return couleurs[indexAleatoire];
+}
 function createImage(src) {
   const image = new Image()
   image.src = src
@@ -375,7 +428,7 @@ map.forEach((row, i) => {
           })
         );
         break
-        case "T1":
+      case "T1":
         boundaries.push(
           new Boundary({
             position: {
@@ -383,11 +436,11 @@ map.forEach((row, i) => {
               y: Boundary.height * i,
             },
             image: createImage("./img/blockvide.png"),
-            name:"T1"
+            name: "T1"
           })
         );
         break
-        case "T2":
+      case "T2":
         boundaries.push(
           new Boundary({
             position: {
@@ -395,9 +448,19 @@ map.forEach((row, i) => {
               y: Boundary.height * i,
             },
             image: createImage("./img/blockvide.png"),
-            name:"T2"
+            name: "T2"
           })
         );
+        break
+      case 'p':
+        powerUps.push(
+          new PowerUp({
+            position: {
+              x: Boundary.width * j + Boundary.width / 2,
+              y: Boundary.height * i + Boundary.height / 2,
+            }
+          })
+        )
         break
     }
   })
@@ -408,11 +471,11 @@ function circlecollideswithrectangle({
   circle,
   rectangle
 }) {
-  const padding = Boundary.width/2 - circle.radius - 1
+  const padding = Boundary.width / 2 - circle.radius - 1
   return (
     circle.position.y - circle.radius + circle.velocity.y <= rectangle.position.y + rectangle.height + padding &&
-    circle.position.x + circle.radius + circle.velocity.x >= rectangle.position.x - padding&&
-    circle.position.y + circle.radius + circle.velocity.y >= rectangle.position.y -padding &&
+    circle.position.x + circle.radius + circle.velocity.x >= rectangle.position.x - padding &&
+    circle.position.y + circle.radius + circle.velocity.y >= rectangle.position.y - padding &&
     circle.position.x - circle.radius + circle.velocity.x <= rectangle.position.x + rectangle.width + padding
 
   )
@@ -521,8 +584,81 @@ function animate() {
 
     }
   }
+  for (let i = ghosts.length - 1; 0 <= i; i--) {
+    const ghost = ghosts[i]
+  if (Math.hypot(
+    ghost.position.x - pacman.position.x,
+    ghost.position.y - pacman.position.y) < ghost.radius + pacman.radius)  {
+      if (ghost.scared){
+    ghosts.splice(i,1)
+    mangerghost.play()
+    setTimeout(() => {
+      ghosts.push( new Ghost({
+        position: {
+          x: Boundary.height * 16 + Boundary.height / 2,
+          y: Boundary.width * 1 + Boundary.width / 2
+        },
+        velocity: {
+          x: Ghost.speed,
+          y: 0,
+        },
+        name:  choisirCouleurAleatoire(),
+        image: createImage("img/pinkRight.png")
+      }))
+        
+    }, 6000);
+  } 
   
-  for (let i = pellets.length - 1; 0 < i; i--) {
+    else
+ { cancelAnimationFrame(animationId) 
+  
+  die.play();
+  afficherModale(false);
+ }
+}
+}
+
+function afficherModale(victoire) {
+  const modale = document.getElementById('modale');
+  const message = document.getElementById('message-modale');
+  message.textContent = victoire ? 'Victoire !' : 'Défaite...';
+  modale.className = 'modale-montrer'; // Affiche la modale
+}
+
+document.getElementById('rejouer').addEventListener('click', function() {
+  document.getElementById('modale').className = 'modale-cacher'; // Cache la modale
+  // Ajoutez ici la logique pour recommencer le jeu
+});
+
+document.querySelector('.fermer').addEventListener('click', function() {
+  document.getElementById('modale').className = 'modale-cacher'; // Cache la modale
+});
+
+if(pellets.length === 0){console.log('you win'); afficherModale(true);
+cancelAnimationFrame(animationId)}
+  for (let i = powerUps.length - 1; 0 <= i; i--) {
+    const powerUp = powerUps[i]
+    powerUp.draw()
+    if (Math.hypot(
+        powerUp.position.x - pacman.position.x,
+        powerUp.position.y - pacman.position.y) < powerUp.radius + pacman.radius) {
+      powerUps.splice(i, 1)
+      manger.play();
+
+      ghosts.forEach(ghost => {
+        ghost.scared = true
+        ghostchase.play();
+        console.log(ghost.scared)
+        setTimeout(() => {
+          ghost.scared = false
+          console.log(ghost.scared)
+          
+        }, 6000)
+
+      });
+    }
+  }
+  for (let i = pellets.length - 1; 0 <= i; i--) {
     const pellet = pellets[i]
     pellet.draw()
     if (Math.hypot(
@@ -545,16 +681,16 @@ function animate() {
         rectangle: boundary
       })
     ) {
-        if (boundary.name=="T1") {
-          pacman.position.y=9*Boundary.height+20
-          pacman.position.x=17*Boundary.width+20
-          return
-        }
-        if (boundary.name=="T2") {
-          pacman.position.y=9*Boundary.height+20
-          pacman.position.x=1*Boundary.width+20
-          return
-        }
+      if (boundary.name == "T1") {
+        pacman.position.y = 9 * Boundary.height + 20
+        pacman.position.x = 17 * Boundary.width + 20
+        return
+      }
+      if (boundary.name == "T2") {
+        pacman.position.y = 9 * Boundary.height + 20
+        pacman.position.x = 1 * Boundary.width + 20
+        return
+      }
       pacman.velocity.x = 0
       pacman.velocity.y = 0
     }
@@ -565,30 +701,28 @@ function animate() {
 
     ghosts.forEach((ghost) => {
       ghost.update()
-      if (Math.hypot(
-        ghost.position.x - pacman.position.x,
-        ghost.position.y - pacman.position.y) < ghost.radius + pacman.radius) 
-        {
-          cancelAnimationFrame(animationId)
-        }
+      
 
       const collisions = []
       boundaries.forEach(boundary => {
-       if (circlecollideswithrectangle({circle: ghost,
-        rectangle: boundary} )){
-        
-        if (boundary.name=="T1") {
-          ghost.position.y=9*Boundary.height+20
-          ghost.position.x=17*Boundary.width+20
-          return
+        if (circlecollideswithrectangle({
+            circle: ghost,
+            rectangle: boundary
+          })) {
+
+          if (boundary.name == "T1") {
+            ghost.position.y = 9 * Boundary.height + 20
+            ghost.position.x = 17 * Boundary.width + 20
+            return
+          }
+          if (boundary.name == "T2") {
+            ghost.position.y = 9 * Boundary.height + 20
+            ghost.position.x = 1 * Boundary.width + 20
+            return
+          }
         }
-        if (boundary.name=="T2") {
-          ghost.position.y=9*Boundary.height+20
-          ghost.position.x=1*Boundary.width+20
-          return
-        }}
         if (
-          
+
           !collisions.includes('right') &&
           circlecollideswithrectangle({
             circle: {
@@ -600,9 +734,9 @@ function animate() {
             },
             rectangle: boundary
           })
-        ) 
-        
-        
+        )
+
+
         {
           collisions.push('right')
         }
@@ -672,17 +806,17 @@ function animate() {
             ghost.velocity.x = 0
             ghost.image = createImage(`./img/${ghost.name}Down.png`)
             break
-            case 'up':
+          case 'up':
             ghost.velocity.y = -ghost.speed
             ghost.velocity.x = 0
             ghost.image = createImage(`./img/${ghost.name}Up.png`)
             break
-            case 'right':
+          case 'right':
             ghost.velocity.y = 0
             ghost.velocity.x = ghost.speed
             ghost.image = createImage(`./img/${ghost.name}Right.png`)
             break
-            case 'left':
+          case 'left':
             ghost.velocity.y = 0
             ghost.velocity.x = -ghost.speed
             ghost.image = createImage(`./img/${ghost.name}Left.png`)
@@ -692,6 +826,11 @@ function animate() {
         ghost.prevcollissions = []
       }
     })
+
+    if (pacman.velocity.x>0) pacman.rotation=0
+    else if  (pacman.velocity.x<0) pacman.rotation = Math.PI
+    else if  (pacman.velocity.y>0) pacman.rotation = Math.PI/2
+    else if  (pacman.velocity.y<0) pacman.rotation = Math.PI*1.5
 }
 
 
@@ -738,3 +877,14 @@ window.addEventListener('keyup', ({
       break
   }
 })
+
+// Modification du gestionnaire d'événement pour le bouton 'rejouer'
+document.getElementById('rejouer').addEventListener('click', function() {
+  // Recharge la page
+  window.location.reload();
+});
+
+// Le reste de la logique pour gérer la fermeture de la modale et l'affichage en cas de victoire ou défaite reste le même
+document.querySelector('.fermer').addEventListener('click', function() {
+  document.getElementById('modale').className = 'modale-cacher'; // Cache la modale
+});
