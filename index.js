@@ -28,7 +28,8 @@ class Pacman {
 
   }
 }
-
+let manger = new Audio ('img/8d82b5_Pacman_Waka_Waka_Sound_Effect.mp3'); 
+manger.volume=0.5
 class Ghost {
   static speed = 2
   constructor({
@@ -520,6 +521,7 @@ function animate() {
 
     }
   }
+  
   for (let i = pellets.length - 1; 0 < i; i--) {
     const pellet = pellets[i]
     pellet.draw()
@@ -528,6 +530,7 @@ function animate() {
         pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius) {
       pellets.splice(i, 1)
       score += 10
+      manger.play();
       scoreEL.innerHTML = score
     }
   }
