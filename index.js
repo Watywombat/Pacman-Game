@@ -4,6 +4,7 @@ const scoreEL = document.querySelector('#scoreEl')
 
 canvas.width = innerWidth
 canvas.height = innerHeight
+
 class Pacman {
   constructor({
     position,
